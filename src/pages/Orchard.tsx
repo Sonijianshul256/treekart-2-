@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
-import { Settings, Leaf, Share2, Mic, Droplets, Bug, Sprout } from 'lucide-react';
+import { Settings, Leaf, Share2, Mic, Droplets, Bug, Sprout, TrendingUp, Bell, AlertTriangle, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const MOCK_ORCHARD = [
   {
@@ -11,7 +12,7 @@ const MOCK_ORCHARD = [
     photoUrl: "https://images.unsplash.com/photo-1591073113125-e46713c829ed?w=500&q=80",
     stage: 40,
     harvestDays: 120,
-    health: { soil: 'Good', leaf: 'Perfect', pest: 'Low' }
+    health: { soil: 82, leaf: 94, pest: 12 }
   },
   {
     id: 't2',
@@ -19,17 +20,41 @@ const MOCK_ORCHARD = [
     photoUrl: "https://images.unsplash.com/photo-1614088924036-7c918a36c965?w=500&q=80",
     stage: 80,
     harvestDays: 20,
-    health: { soil: 'Dry', leaf: 'Good', pest: 'None' }
+    health: { soil: 45, leaf: 76, pest: 35 }
   }
+];
+
+const HISTORICAL_DATA = [
+  { month: 'Jan', soilMoisture: 65, overallHealth: 80 },
+  { month: 'Feb', soilMoisture: 70, overallHealth: 82 },
+  { month: 'Mar', soilMoisture: 58, overallHealth: 79 },
+  { month: 'Apr', soilMoisture: 75, overallHealth: 85 },
+  { month: 'May', soilMoisture: 82, overallHealth: 88 },
+  { month: 'Jun', soilMoisture: 78, overallHealth: 90 },
 ];
 
 export default function Orchard() {
   const { user } = useStore();
   const navigate = useNavigate();
   const [showQRScanner, setShowQRScanner] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'critical', title: 'Low Moisture Alert', message: 'Tree "Papaya Petal" soil moisture dropped below 50%.', read: false, time: '10m ago' },
+    { id: 2, type: 'warning', title: 'High Pest Risk', message: 'Seasonal pests detected near your sector. Applying organic neem oil.', read: false, time: '2h ago' }
+  ]);
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = (id: number) => {
+    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  };
 
   return (
-    <div className="relative w-full h-full pb-20">
+    <div className="relative w-full h-full pb-20 overflow-x-hidden">
       {/* Header */}
       <div className="bg-[#FCF9F2]/80 backdrop-blur-md pt-12 pb-6 px-6 sticky top-0 z-30">
         <div className="flex justify-between items-center mb-6">
@@ -37,10 +62,68 @@ export default function Orchard() {
             <h2 className="text-[#6B6B6B] text-[10px] uppercase tracking-widest font-bold">Welcome back,</h2>
             <h1 className="text-3xl font-bold font-heading text-[#1A5F5A] leading-none mt-1">{user?.name || 'Tree Parent'}</h1>
           </div>
-          <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-stone-200 text-[#1A5F5A]">
-            <Settings size={20} />
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-stone-200 text-[#1A5F5A] hover:bg-stone-50 transition-colors"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+              )}
+            </button>
+            <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-stone-200 text-[#1A5F5A] hover:bg-stone-50 transition-colors">
+              <Settings size={20} />
+            </button>
+          </div>
         </div>
+        
+        {/* Notifications Panel */}
+        {showNotifications && (
+          <div className="absolute top-28 left-4 right-4 bg-white rounded-[24px] shadow-2xl border border-stone-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">
+              <h3 className="font-bold text-[#2D2D2D] text-sm">Notifications</h3>
+              {unreadCount > 0 && (
+                <button onClick={markAllAsRead} className="text-[10px] text-[#1A5F5A] font-bold uppercase tracking-widest hover:underline">
+                  Mark all read
+                </button>
+              )}
+            </div>
+            <div className="max-h-[300px] overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-stone-500 text-sm">No new notifications</div>
+              ) : (
+                notifications.map(n => (
+                  <div 
+                    key={n.id} 
+                    onClick={() => markAsRead(n.id)}
+                    className={cn(
+                      "p-4 border-b border-stone-50 flex gap-3 transition-colors cursor-pointer",
+                      !n.read ? "bg-blue-50/30" : "opacity-75"
+                    )}
+                  >
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                      n.type === 'critical' ? "bg-red-100 text-red-600" : "bg-orange-100 text-orange-600"
+                    )}>
+                      {n.type === 'critical' ? <AlertTriangle size={16} /> : <Bug size={16} />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <h4 className={cn("text-xs font-bold", !n.read ? "text-[#2D2D2D]" : "text-[#6B6B6B]")}>{n.title}</h4>
+                        <span className="text-[9px] text-[#6B6B6B] font-mono">{n.time}</span>
+                      </div>
+                      <p className="text-[11px] text-[#6B6B6B] mt-1 leading-snug">{n.message}</p>
+                    </div>
+                    {!n.read && (
+                      <div className="w-2 h-2 rounded-full bg-[#1A5F5A] mt-1 shrink-0" />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
         
         <div className="bg-white rounded-[24px] border border-stone-100 p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-4">
@@ -105,27 +188,86 @@ export default function Orchard() {
 
               {/* Health Gauges Row */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white rounded-3xl p-4 border border-stone-100 shadow-sm flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-full border-4 flex items-center justify-center relative ${tree.health.soil === 'Dry' ? 'border-[#F4B942]/40 text-[#F4B942]' : 'border-[#2E7D32]/20 text-[#2E7D32]'}`}>
-                    <span className="text-xs font-mono font-bold leading-none">{tree.health.soil === 'Dry' ? 'Dry' : 'OK'}</span>
+                <div className="bg-white rounded-[20px] p-3 border border-stone-100 shadow-sm flex flex-col items-center justify-center">
+                  <div className={`w-12 h-12 rounded-full border-4 ${tree.health.soil < 50 ? 'border-[#F4B942]/20' : 'border-[#2E7D32]/20'} flex items-center justify-center relative`}>
+                    <svg className="absolute inset-[-4px] -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="transparent" stroke={tree.health.soil < 50 ? "#F4B942" : "#2E7D32"} strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * tree.health.soil) / 100} strokeLinecap="round" />
+                    </svg>
+                    <span className="text-xs font-mono font-bold leading-none">{tree.health.soil}%</span>
                   </div>
-                  <span className="text-[9px] mt-3 uppercase tracking-widest text-[#6B6B6B] font-bold text-center">Soil Moisture</span>
+                  <span className="text-[9px] mt-2 uppercase tracking-widest text-[#6B6B6B] font-bold text-center">Moisture</span>
                 </div>
-                <div className="bg-white rounded-3xl p-4 border border-stone-100 shadow-sm flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full border-4 border-[#1A5F5A]/20 flex items-center justify-center relative text-[#1A5F5A]">
-                    <span className="text-xs font-mono font-bold leading-none">{tree.health.pest}</span>
+                <div className="bg-white rounded-[20px] p-3 border border-stone-100 shadow-sm flex flex-col items-center justify-center">
+                  <div className={`w-12 h-12 rounded-full border-4 ${tree.health.pest > 30 ? 'border-[#FF8C42]/20' : 'border-[#1A5F5A]/20'} flex items-center justify-center relative`}>
+                     <svg className="absolute inset-[-4px] -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="transparent" stroke={tree.health.pest > 30 ? "#FF8C42" : "#1A5F5A"} strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * tree.health.pest) / 100} strokeLinecap="round" />
+                    </svg>
+                    <span className="text-xs font-mono font-bold leading-none">{tree.health.pest}%</span>
                   </div>
-                  <span className="text-[9px] mt-3 uppercase tracking-widest text-[#6B6B6B] font-bold text-center">Pest Risk</span>
+                  <span className="text-[9px] mt-2 uppercase tracking-widest text-[#6B6B6B] font-bold text-center">Pest Risk</span>
                 </div>
-                <div className="bg-white rounded-3xl p-4 border border-stone-100 shadow-sm flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-[#1A5F5A]/10 flex items-center justify-center text-[#1A5F5A]">
-                    <Sprout size={18} />
+                <div className="bg-white rounded-[20px] p-3 border border-stone-100 shadow-sm flex flex-col items-center justify-center">
+                  <div className={`w-12 h-12 rounded-full border-4 border-[#2E7D32]/20 flex items-center justify-center relative`}>
+                    <svg className="absolute inset-[-4px] -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="transparent" stroke="#2E7D32" strokeWidth="8" strokeDasharray="251.2" strokeDashoffset={251.2 - (251.2 * tree.health.leaf) / 100} strokeLinecap="round" />
+                    </svg>
+                    <span className="text-xs font-mono font-bold leading-none">{tree.health.leaf}%</span>
                   </div>
-                  <span className="text-[9px] mt-3 uppercase tracking-widest text-[#6B6B6B] font-bold text-center">Leaf Health</span>
+                  <span className="text-[9px] mt-2 uppercase tracking-widest text-[#6B6B6B] font-bold text-center">Vitality</span>
                 </div>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Historical Trends Section */}
+        <div className="mt-8 mb-4">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-[#6B6B6B]">Orchard Health Trends</h3>
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-[#1A5F5A] bg-[#1A5F5A]/10 px-2 py-1 rounded-full">
+              <TrendingUp size={12} />
+              <span>Past 6 Months</span>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-[24px] p-5 border border-stone-100 shadow-sm w-full">
+            <div className="h-[200px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={HISTORICAL_DATA} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorHealth" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1A5F5A" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#1A5F5A" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorMoisture" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2E7D32" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#2E7D32" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E8EAE0" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B6B6B' }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#6B6B6B' }} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                    itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                    labelStyle={{ fontSize: '10px', color: '#6B6B6B', textTransform: 'uppercase', marginBottom: '4px' }}
+                  />
+                  <Area type="monotone" dataKey="overallHealth" name="Overall Health" stroke="#1A5F5A" strokeWidth={3} fillOpacity={1} fill="url(#colorHealth)" />
+                  <Area type="monotone" dataKey="soilMoisture" name="Soil Moisture" stroke="#2E7D32" strokeWidth={2} fillOpacity={1} fill="url(#colorMoisture)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex items-center justify-center gap-6 mt-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#1A5F5A]"></div>
+                <span className="text-[10px] uppercase font-bold text-[#6B6B6B]">Overall Health</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-[#2E7D32]"></div>
+                <span className="text-[10px] uppercase font-bold text-[#6B6B6B]">Soil Moisture</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Farm Updates Section */}

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
-import { Filter, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
+import { Filter, User, X, Info, Hand, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { MapPolygon } from '../components/MapPolygon';
 
 // Farm boundaries in Rajasthan (dummy coords near Jaipur)
 const farmPolygon: {lat: number, lng: number}[] = [
@@ -21,10 +22,22 @@ const TREES = [
 
 export default function Explore() {
   const [selectedTree, setSelectedTree] = useState<any>(null);
+  const [showTutorial, setShowTutorial] = useState(true);
+
+  useEffect(() => {
+    if (localStorage.getItem('exploreTutorialSeen') === 'true') {
+      setShowTutorial(false);
+    }
+  }, []);
+
+  const dismissTutorial = () => {
+    setShowTutorial(false);
+    localStorage.setItem('exploreTutorialSeen', 'true');
+  };
 
   return (
-    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}>
-      <div className="relative w-full h-full flex flex-col">
+    <APIProvider apiKey={'AIzaSyCnqDhwKicFvcynIx2Z5CJYqm6uk0Y-gSk'}>
+      <div className="relative w-full flex-1 flex flex-col min-h-0">
         {/* Top Bar */}
         <div className="absolute top-0 left-0 right-0 z-[400] p-4 flex justify-between items-center bg-gradient-to-b from-white/80 to-transparent backdrop-blur-sm pt-12 text-primary pointer-events-none">
           <h1 className="text-2xl font-heading font-bold pointer-events-auto">Find your tree</h1>
@@ -39,37 +52,73 @@ export default function Explore() {
         </div>
 
         {/* Map Content */}
-        <div className="flex-1 w-full bg-[#E5E3DF] z-0">
+        <div className="absolute inset-0 z-0 bg-[#E5E3DF]">
+          {showTutorial && (
+            <div className="absolute top-24 left-4 right-4 z-[400] bg-white/95 backdrop-blur-md rounded-[24px] p-5 shadow-2xl border border-white/50 flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="flex justify-between items-start mb-1">
+                 <div className="flex items-center gap-2 text-[#1A5F5A] font-bold">
+                    <Info size={18} />
+                    <h3 className="text-lg">Welcome to the Farm!</h3>
+                 </div>
+                 <button onClick={dismissTutorial} className="p-1 -mr-1 -mt-1 text-stone-400 hover:text-stone-600 bg-stone-100/50 rounded-full">
+                   <X size={16} />
+                 </button>
+               </div>
+               <div className="space-y-3 text-sm text-stone-600">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 bg-[#2E7D32]/10 text-[#2E7D32] rounded-lg shrink-0">
+                      <Hand size={16} />
+                    </div>
+                    <p className="leading-snug"><strong>Pan & Zoom</strong> to explore the farm area outlined in green.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 bg-[#2E7D32]/10 text-[#2E7D32] rounded-lg shrink-0">
+                      <MapPin size={16} />
+                    </div>
+                    <p className="leading-snug"><strong>Tap a marker</strong> or a tree card below to view its details, health, and yield estimate.</p>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 p-1.5 bg-[#2E7D32]/10 text-[#2E7D32] rounded-lg shrink-0">
+                      <Filter size={16} />
+                    </div>
+                    <p className="leading-snug"><strong>Filter</strong> trees by type or availability using the icon at the top.</p>
+                  </div>
+               </div>
+               <button onClick={dismissTutorial} className="w-full mt-3 py-3 bg-[#1A5F5A] text-white font-bold rounded-xl text-sm active:bg-[#1A5F5A]/90 transition-colors shadow-md shadow-[#1A5F5A]/20">
+                 Got it, let's explore!
+               </button>
+            </div>
+          )}
           <Map
             defaultCenter={{lat: 26.915, lng: 75.81}}
             defaultZoom={14}
             gestureHandling={'greedy'}
             disableDefaultUI={true}
-            mapId="DEMO_MAP_ID"
             className="w-full h-full"
+            style={{ width: '100%', height: '100%' }}
           >
+            <MapPolygon 
+              paths={farmPolygon} 
+              options={{ fillColor: '#2E7D32', fillOpacity: 0.1, strokeColor: '#2E7D32', strokeWeight: 2 }} 
+            />
             {TREES.map(tree => {
-              let emoji = '🟢';
-              let classes = 'bg-white rounded-full shadow-md flex items-center justify-center text-xl w-8 h-8';
-              
-              if (tree.status === 'rented_others') {
-                emoji = '🔒';
-                classes += ' opacity-60';
-              } else if (tree.status === 'rented_user') {
-                emoji = '🌳';
-                classes += ' ring-4 ring-blue-400 animate-pulse';
+              let iconUrl = '';
+              if (tree.status === 'rented_user') {
+                iconUrl = 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
+              } else if (tree.status === 'rented_others') {
+                iconUrl = 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
               } else {
-                emoji = tree.type === 'Papaya' ? '🌿' : '🥭';
+                iconUrl = 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
               }
 
               return (
-                <AdvancedMarker 
+                <Marker 
                   key={tree.id} 
                   position={{lat: tree.lat, lng: tree.lng}}
                   onClick={() => setSelectedTree(tree)}
-                >
-                  <div className={classes}>{emoji}</div>
-                </AdvancedMarker>
+                  title={tree.type}
+                  icon={iconUrl}
+                />
               );
             })}
           </Map>

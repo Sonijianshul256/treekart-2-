@@ -42,8 +42,8 @@ export function AppLayout() {
   const hideNav = location.pathname.includes('/login');
 
   return (
-    <div className="min-h-screen bg-bg-base flex flex-col max-w-md mx-auto relative shadow-2xl overflow-hidden">
-      <main className={cn("flex-1 w-full relative", !hideNav && "pb-[70px]")}>
+    <div className="min-h-[100dvh] bg-bg-base flex flex-col max-w-md mx-auto relative shadow-2xl overflow-hidden">
+      <main className={cn("flex-1 w-full relative flex flex-col", !hideNav && "pb-[70px]")}>
         <Outlet />
       </main>
       {!hideNav && <Navigation />}
