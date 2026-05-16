@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+@theme {
+  --color-primary: #1A5F5A;
+  --color-primary-light: #2A8F8A;
+  --color-secondary: #FF8C42;
+  --color-bg-base: #FCF9F2;
+  --color-surface: #FFFFFF;
+  --color-success: #2E7D32;
+  --color-warning: #F4B942;
+  --color-error: #D9534F;
+  --color-text-main: #2D2D2D;
+  --color-text-sub: #6B6B6B;
+  
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Roboto Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --spacing-base: 8px;
+  
+  --radius-card: 20px;
+  --radius-small: 12px;
+  --radius-sheet: 30px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Base mobile app style overrides */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

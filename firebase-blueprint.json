@@ -1,0 +1,126 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile data",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "city": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "treeCoins": { "type": "number" },
+        "badges": { "type": "array" },
+        "streakDays": { "type": "number" },
+        "lastLoginDate": { "type": "string" },
+        "carbonTotal": { "type": "number" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Tree": {
+      "title": "Tree",
+      "description": "Tree data",
+      "type": "object",
+      "properties": {
+        "treeId": { "type": "string" },
+        "type": { "type": "string" },
+        "coordinates": { "type": "object" },
+        "status": { "type": "string" },
+        "price": { "type": "number" },
+        "currentOwnerId": { "type": "string" },
+        "sharedWith": { "type": "array" },
+        "plantedDate": { "type": "string" },
+        "name": { "type": "string" },
+        "birthDate": { "type": "string" }
+      },
+      "required": ["treeId", "type", "status"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Tree subscription",
+      "type": "object",
+      "properties": {
+        "subId": { "type": "string" },
+        "userId": { "type": "string" },
+        "treeId": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "amount": { "type": "number" },
+        "isShared": { "type": "boolean" },
+        "autoRenew": { "type": "boolean" }
+      },
+      "required": ["subId", "userId", "treeId"]
+    },
+    "DailyUpdate": {
+      "title": "DailyUpdate",
+      "description": "Daily update for a tree",
+      "type": "object",
+      "properties": {
+        "updateId": { "type": "string" },
+        "treeId": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "activity": { "type": "string" },
+        "soilMoisture": { "type": "number" }
+      },
+      "required": ["updateId", "treeId", "timestamp"]
+    },
+    "Delivery": {
+      "title": "Delivery",
+      "description": "Harvest delivery tracking",
+      "type": "object",
+      "properties": {
+        "deliveryId": { "type": "string" },
+        "treeId": { "type": "string" },
+        "userId": { "type": "string" },
+        "status": { "type": "string" },
+        "eta": { "type": "string" },
+        "ripeness": { "type": "number" }
+      },
+      "required": ["deliveryId", "userId", "status"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Community post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "treeId": { "type": "string" },
+        "type": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "caption": { "type": "string" },
+        "likes": { "type": "number" }
+      },
+      "required": ["postId", "userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profiles"
+    },
+    "/trees/{treeId}": {
+      "schema": { "$ref": "Tree" },
+      "description": "Available and rented trees"
+    },
+    "/subscriptions/{subId}": {
+      "schema": { "$ref": "Subscription" },
+      "description": "User subscriptions"
+    },
+    "/dailyUpdates/{updateId}": {
+      "schema": { "$ref": "DailyUpdate" },
+      "description": "Tree daily updates"
+    },
+    "/deliveries/{deliveryId}": {
+      "schema": { "$ref": "Delivery" },
+      "description": "Deliveries tracking"
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "Post" },
+      "description": "Community posts"
+    }
+  }
+}

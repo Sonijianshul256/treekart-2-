@@ -1,0 +1,9 @@
+{
+  "name": "Treekart",
+  "description": "A cross-platform mobile-first web app for renting organic fruit trees in rural Rajasthan.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}
